@@ -62,7 +62,7 @@
         slide = $('svg', { xmlns: 'http://www.w3.org/2000/svg', version: '1.1', width: '100%', height: '100%' },
                   [
                       $('defs', {},
-                        $('linearGradient', { id: 'gradient-hsv', x1: '0%', y1: '100%', x2: '0%', y2: '0%'},
+                        $('linearGradient', { id: 'gradient-hsv', x1: '', y1: '', x2: '0%', y2: '0%'},
                           [
                               $('stop', { offset: '0%', 'stop-color': '#FF0000', 'stop-opacity': '1' }),
                               $('stop', { offset: '13%', 'stop-color': '#FF00FF', 'stop-opacity': '1' }),
@@ -187,7 +187,9 @@
         return function(evt) {
             evt = evt || window.event;
             var mouse = mousePosition(evt);
-            ctx.h = mouse.y / slideElement.offsetHeight * 360 + hueOffset;
+            ctx.h = (slideElement.offsetHeight > slideElement.offsetWidth)
+                ? mouse.y / slideElement.offsetHeight * 360 + hueOffset
+                : mouse.x / slideElement.offsetWidth * 360 + hueOffset;
             var pickerColor = hsv2rgb({ h: ctx.h, s: 1, v: 1 });
             var c = hsv2rgb({ h: ctx.h, s: ctx.s, v: ctx.v });
             pickerElement.style.backgroundColor = pickerColor.hex;
@@ -270,6 +272,17 @@
 
             hsvGradient.id = 'gradient-hsv-' + uniqID;
             hsvRect.setAttribute('fill', 'url(#' + hsvGradient.id + ')');
+
+            if (this.slideElement.offsetHeight > this.slideElement.offsetWidth) {
+
+                hsvGradient.setAttribute('x1', '0%');
+                hsvGradient.setAttribute('y1', '100%');
+
+            } else {
+
+                hsvGradient.setAttribute('x1', '100%');
+                hsvGradient.setAttribute('y1', '0%');
+            }
 
             var blackAndWhiteGradients = [pickerClone.getElementsByTagName('linearGradient')[0], pickerClone.getElementsByTagName('linearGradient')[1]];
             var whiteAndBlackRects = pickerClone.getElementsByTagName('rect');
@@ -371,10 +384,19 @@
 
         var c = hsv2rgb(ctx);
 
-        var mouseSlide = {
-            y: (ctx.h * ctx.slideElement.offsetHeight) / 360,
-            x: 0    // not important
-        };
+        var mouseSlide;
+
+        if (ctx.slideElement.offsetHeight > ctx.slideElement.offsetWidth) {
+            mouseSlide = {
+                y: (ctx.h * ctx.slideElement.offsetHeight) / 360,
+                x: 0    // not important
+            };
+        } else {
+            mouseSlide = {
+                x: (ctx.h * ctx.slideElement.offsetWidth) / 360,
+                y: 0,    // not important
+            };
+        }
 
         var pickerHeight = ctx.pickerElement.offsetHeight;
 
@@ -423,7 +445,11 @@
     ColorPicker.positionIndicators = function(slideIndicator, pickerIndicator, mouseSlide, mousePicker) {
 
         if (mouseSlide) {
-            slideIndicator.style.top = (mouseSlide.y - slideIndicator.offsetHeight/2) + 'px';
+            if (slideIndicator.offsetHeight > slideIndicator.offsetWidth) {
+                slideIndicator.style.top = (mouseSlide.y - slideIndicator.offsetHeight/2) + 'px';
+            } else {
+                slideIndicator.style.left = (mouseSlide.x - slideIndicator.offsetWidth/2) + 'px';
+            }
         }
         if (mousePicker) {
             pickerIndicator.style.top = (mousePicker.y - pickerIndicator.offsetHeight/2) + 'px';
